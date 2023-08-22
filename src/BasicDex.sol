@@ -13,7 +13,6 @@ interface IERC20 {
     function balanceOf(address user) external view returns (uint256);
 }
 
-
 /// @title Token-Token DEX
 /// @author mctoady.eth
 /// @notice A simple token to token DEX with built in slippage protection
@@ -108,18 +107,48 @@ contract BasicDex {
         return (numerator / denominator);
     }
 
-     /// @notice returns amount of liquidity provided by an address
-     /// @param _user the address to check the liquidity of
-     /// @return amount of liquidity _user has provided
+    /// @notice helper function to get quick current price of assetToken
+    /// @dev external function to avoid having to know reserve amounts to check prices
+    /// @param creditIn amount of credits to calculate assetToken price
+    /// @return assetOut amount of assets tradable for 'creditIn' amount of credits (including fee)
+    function assetPrice(
+        uint256 creditIn
+    ) external view returns (uint256 assetOut) {
+        uint256 credReserves = creditToken.balanceOf(address(this));
+        uint256 assetReserves = assetToken.balanceOf(address(this));
+        uint256 creditInWithFee = creditIn * 997;
+        uint256 numerator = creditInWithFee * assetReserves;
+        uint256 denominator = (credReserves * 1000) + creditInWithFee;
+        return (numerator / denominator);
+    }
+
+    /// @notice helper function to get quick current price of creditToken
+    /// @dev external function to avoid having to know reserve amounts to check prices
+    /// @param assetIn amount of assets to calculate creditToken price
+    /// @return creditOut amount of credits tradable for 'assetIn' amount of assets (including fee)
+    function creditPrice(
+        uint256 assetIn
+    ) external view returns (uint256 creditOut) {
+        uint256 assetReserves = assetToken.balanceOf(address(this));
+        uint256 creditReserves = creditToken.balanceOf(address(this));
+        uint256 assetInWithFee = assetIn * 997;
+        uint256 numerator = assetInWithFee * creditReserves;
+        uint256 denominator = (assetReserves * 1000) + assetInWithFee;
+        return (numerator / denominator);
+    }
+
+    /// @notice returns amount of liquidity provided by an address
+    /// @param _user the address to check the liquidity of
+    /// @return amount of liquidity _user has provided
     function getLiquidity(address _user) public view returns (uint256) {
         return liquidity[_user];
     }
 
-     /// @notice trades creditTokens for assetTokens
-     /// @dev the applications frontend should calculate price and provide the user with suitable values for minTokensBack
-     /// @param tokensIn the number of credit tokens to be sold
-     /// @param minTokensBack the minimum number of asset tokens the user will accept in return (for slippage protection)
-     /// @return tokenOutput the number of asset tokens received by the user
+    /// @notice trades creditTokens for assetTokens
+    /// @dev the applications frontend should calculate price and provide the user with suitable values for minTokensBack
+    /// @param tokensIn the number of credit tokens to be sold
+    /// @param minTokensBack the minimum number of asset tokens the user will accept in return (for slippage protection)
+    /// @return tokenOutput the number of asset tokens received by the user
     function creditToAsset(
         uint256 tokensIn,
         uint256 minTokensBack
@@ -153,11 +182,11 @@ contract BasicDex {
         emit TokenSwap(msg.sender, 0, tokensIn, tokenOutput);
     }
 
-     /// @notice trades assetTokens for creditTokens
-     /// @dev the applications frontend should calculate price and provide the user with suitable values for minTokensBack
-     /// @param tokensIn the number of asset tokens to be sold
-     /// @param minTokensBack the minimum number of credit tokens the user will accept in return (for slippage protection)
-     /// @return tokenOutput the number of credit tokens received by the user
+    /// @notice trades assetTokens for creditTokens
+    /// @dev the applications frontend should calculate price and provide the user with suitable values for minTokensBack
+    /// @param tokensIn the number of asset tokens to be sold
+    /// @param minTokensBack the minimum number of credit tokens the user will accept in return (for slippage protection)
+    /// @return tokenOutput the number of credit tokens received by the user
     function assetToCredit(
         uint256 tokensIn,
         uint256 minTokensBack
@@ -190,10 +219,10 @@ contract BasicDex {
         emit TokenSwap(msg.sender, 1, tokensIn, tokenOutput);
     }
 
-     /// @notice allows used to provide liquidity to the dex
-     /// @dev the user should know prior to calling the amount of asset tokens they will need to provide liquidity evenly
-     /// @param creditTokenDeposited the number of credit tokens the user wishes to deposit, the function will calculate the amount of asset tokens required to balance the liquidity provided
-     /// @return liquidityMinted the amount of liquidity added by user in this transaction
+    /// @notice allows used to provide liquidity to the dex
+    /// @dev the user should know prior to calling the amount of asset tokens they will need to provide liquidity evenly
+    /// @param creditTokenDeposited the number of credit tokens the user wishes to deposit, the function will calculate the amount of asset tokens required to balance the liquidity provided
+    /// @return liquidityMinted the amount of liquidity added by user in this transaction
     function deposit(
         uint256 creditTokenDeposited
     ) public returns (uint256 liquidityMinted) {
@@ -238,11 +267,11 @@ contract BasicDex {
         );
     }
 
-     /// @notice allows users to withdraw liquidity previously deposited to the dex
-     /// @dev users should be aware that the proportion of tokens deposited can change over time (see: impermanent loss)
-     /// @param amount the amount of liquidity they wish to withdraw
-     /// @return creditTokenAmount the number of credit tokens they'll receive
-     /// @return assetTokenAmount the number of asset tokens they'll receive
+    /// @notice allows users to withdraw liquidity previously deposited to the dex
+    /// @dev users should be aware that the proportion of tokens deposited can change over time (see: impermanent loss)
+    /// @param amount the amount of liquidity they wish to withdraw
+    /// @return creditTokenAmount the number of credit tokens they'll receive
+    /// @return assetTokenAmount the number of asset tokens they'll receive
     function withdraw(
         uint256 amount
     ) public returns (uint256 creditTokenAmount, uint256 assetTokenAmount) {
