@@ -17,10 +17,10 @@ contract DexDeployScript is Script {
     function run() public {
         vm.startBroadcast();
         CreditToken cred = new CreditToken("BuidlCoin", "BUIDL", msg.sender);
-        AssetToken banana = new AssetToken("Banana", "BNNA");
-        AssetToken apple = new AssetToken("Apple", "APL");
-        AssetToken orange = new AssetToken("Orange", "ORG");
-        AssetToken lemon = new AssetToken("Lemon", "LMN");
+        AssetToken banana = new AssetToken("Banana", "BNNA", address(this));
+        AssetToken apple = new AssetToken("Apple", "APL", address(this));
+        AssetToken orange = new AssetToken("Orange", "ORG", address(this));
+        AssetToken lemon = new AssetToken("Lemon", "LMN", address(this));
 
         BasicDex bananaCred = new BasicDex(address(cred), address(banana));
         BasicDex appleCred = new BasicDex(address(cred), address(apple));

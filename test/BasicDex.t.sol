@@ -25,12 +25,12 @@ contract CounterTest is Test {
 
     function setUp() public {
         // Create the systems ERC20 tokens
-        credit = new CreditToken("Scaffold Dollars", "SCAFF", address(this));
-        wood = new AssetToken("Wood", "WD");
-        oil = new AssetToken("Oil", "OIL");
-        water = new AssetToken("Water", "WTR");
-        gold = new AssetToken("Gold", "GLD");
-        stone = new AssetToken("Stone", "STN");
+        credit = new CreditToken("Buidl Dollars", "BUIDL", address(this));
+        wood = new AssetToken("Wood", "WD", address(this));
+        oil = new AssetToken("Oil", "OIL", address(this));
+        water = new AssetToken("Water", "WTR", address(this));
+        gold = new AssetToken("Gold", "GLD", address(this));
+        stone = new AssetToken("Stone", "STN", address(this));
 
         // Create the Dexes
         creditWood = new BasicDex(address(credit), address(wood));
@@ -109,5 +109,18 @@ contract CounterTest is Test {
         vm.startPrank(alice, alice);
         vm.expectRevert(bytes("UNAUTHORIZED"));
         credit.airdropToWallets(wallets);
+    }
+
+    function testCreditTokenPriceCheck() public {
+        uint256 creditsOut = creditWood.creditPrice(1 ether);
+        uint256 creditsReceived = creditWood.assetToCredit(1 ether, 0);
+        console.log("Credits Out", creditsOut);
+        assertEq(creditsOut, creditsReceived);
+    }
+    function testAssetTokenPriceCheck() public {
+        uint256 assetsOut = creditWood.assetPrice(1 ether);
+        uint256 assetsReceived = creditWood.creditToAsset(1 ether, 0);
+        console.log("Assets Out", assetsOut);
+        assertEq(assetsOut, assetsReceived);
     }
 }
