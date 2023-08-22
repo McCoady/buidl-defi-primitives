@@ -116,10 +116,7 @@ contract BasicDex {
     ) external view returns (uint256 assetOut) {
         uint256 credReserves = creditToken.balanceOf(address(this));
         uint256 assetReserves = assetToken.balanceOf(address(this));
-        uint256 creditInWithFee = creditIn * 997;
-        uint256 numerator = creditInWithFee * assetReserves;
-        uint256 denominator = (credReserves * 1000) + creditInWithFee;
-        return (numerator / denominator);
+        return price(creditIn, credReserves, assetReserves);
     }
 
     /// @notice helper function to get quick current price of creditToken
@@ -131,10 +128,7 @@ contract BasicDex {
     ) external view returns (uint256 creditOut) {
         uint256 assetReserves = assetToken.balanceOf(address(this));
         uint256 creditReserves = creditToken.balanceOf(address(this));
-        uint256 assetInWithFee = assetIn * 997;
-        uint256 numerator = assetInWithFee * creditReserves;
-        uint256 denominator = (assetReserves * 1000) + assetInWithFee;
-        return (numerator / denominator);
+        return price(assetIn, assetReserves, creditReserves);
     }
 
     /// @notice returns amount of liquidity provided by an address
