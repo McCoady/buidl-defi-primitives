@@ -112,15 +112,24 @@ contract CounterTest is Test {
     }
 
     function testCreditTokenPriceCheck() public {
-        uint256 creditsOut = creditWood.creditPrice(1 ether);
+        uint256 creditsOut = creditWood.creditInPrice(1 ether);
         uint256 creditsReceived = creditWood.assetToCredit(1 ether, 0);
         console.log("Credits Out", creditsOut);
         assertEq(creditsOut, creditsReceived);
     }
     function testAssetTokenPriceCheck() public {
-        uint256 assetsOut = creditWood.assetPrice(1 ether);
+        uint256 assetsOut = creditWood.assetInPrice(1 ether);
         uint256 assetsReceived = creditWood.creditToAsset(1 ether, 0);
         console.log("Assets Out", assetsOut);
         assertEq(assetsOut, assetsReceived);
+    }
+
+    function testPriceForCredit(uint256 _in) public {
+        vm.assume(_in > 100_000);
+        vm.assume(_in < 100 ether);
+        uint256 priceOfCred = creditWood.creditOutPrice(_in);
+        uint256 creditsOut = creditWood.creditInPrice(priceOfCred);
+        console.log(creditsOut);
+        assertEq(creditsOut, _in);
     }
 }

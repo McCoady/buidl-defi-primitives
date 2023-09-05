@@ -104,14 +104,22 @@ contract BasicDex {
         uint256 xInputWithFee = xInput * 997;
         uint256 numerator = xInputWithFee * yReserves;
         uint256 denominator = (xReserves * 1000) + xInputWithFee;
-        return (numerator / denominator);
+        return numerator / denominator;
     }
 
-    /// @notice helper function to get quick current price of assetToken
+    function getAssetAddr() external view returns (address) {
+        return address(assetToken);
+    }
+
+    function getCreditAddr() external view returns (address) {
+        return address(creditToken);
+    }
+
+    /// @notice helper function to get assetOut from a specified creditIn
     /// @dev external function to avoid having to know reserve amounts to check prices
     /// @param creditIn amount of credits to calculate assetToken price
     /// @return assetOut amount of assets tradable for 'creditIn' amount of credits (including fee)
-    function assetPrice(
+    function creditInPrice(
         uint256 creditIn
     ) external view returns (uint256 assetOut) {
         uint256 credReserves = creditToken.balanceOf(address(this));
@@ -119,16 +127,52 @@ contract BasicDex {
         return price(creditIn, credReserves, assetReserves);
     }
 
-    /// @notice helper function to get quick current price of creditToken
+    /// @notice helper function to get creditOut from a specified assetIn
     /// @dev external function to avoid having to know reserve amounts to check prices
     /// @param assetIn amount of assets to calculate creditToken price
     /// @return creditOut amount of credits tradable for 'assetIn' amount of assets (including fee)
-    function creditPrice(
+    function assetInPrice(
         uint256 assetIn
     ) external view returns (uint256 creditOut) {
         uint256 assetReserves = assetToken.balanceOf(address(this));
         uint256 creditReserves = creditToken.balanceOf(address(this));
         return price(assetIn, assetReserves, creditReserves);
+    }
+
+    /// @notice helper function to get assetIn required for a specified creditOut
+    /// @dev external function to help frontend calculate token amounts for user
+    /// @param creditOut amount of credit the user wishes to receive
+    /// @return assetIn amount of asset necessary to receive creditOut
+    function creditOutPrice(
+        uint256 creditOut
+    ) external view returns (uint256 assetIn) {
+        uint256 assetReserves = assetToken.balanceOf(address(this));
+        uint256 creditReserves = creditToken.balanceOf(address(this));
+
+        if (creditOut >= creditReserves)
+            revert InsufficientLiquidityError(creditReserves);
+
+        uint256 numerator = assetReserves * creditOut * 1000;
+        uint256 denominator = (creditReserves - creditOut) * 997;
+        return (numerator / denominator) + 1;
+    }
+
+    /// @notice helper function to get creditIn required for a specified assetOut
+    /// @dev external function to help frontend calculate token amounts for user
+    /// @param assetOut amount of asset the user wishes to receive
+    /// @return creditIn amount of credit necessary to receive assetOut
+    function assetOutPrice(
+        uint256 assetOut
+    ) external view returns (uint256 creditIn) {
+        uint256 assetReserves = assetToken.balanceOf(address(this));
+        uint256 creditReserves = creditToken.balanceOf(address(this));
+
+        if (assetOut >= assetReserves)
+            revert InsufficientLiquidityError(assetReserves);
+
+        uint256 numerator = creditReserves * assetOut * 1000;
+        uint256 denominator = (assetReserves - assetOut) * 997;
+        return (numerator / denominator) + 1;
     }
 
     /// @notice returns amount of liquidity provided by an address
