@@ -14,13 +14,18 @@ import "../src/BasicDex.sol";
 // ideas, price graph, AI twitter
 
 contract DexDeployScript is Script {
+    address owner = 0xD26536C559B10C5f7261F3FfaFf728Fe1b3b0dEE;
     function run() public {
         uint256 deployerPk = vm.envUint("DEPLOYER_PK");
         vm.startBroadcast(deployerPk);
-        CreditToken cred = new CreditToken("Salt", "SALT", msg.sender);
-        AssetToken avocado = new AssetToken("Avocado", "AVOC", msg.sender);
-        AssetToken banana = new AssetToken("Banana", "BNNA", msg.sender);
-        AssetToken tomato = new AssetToken("Tomato", "TMTO", msg.sender);
+        CreditToken cred = new CreditToken("Salt", "SALT", owner);
+        AssetToken avocado = new AssetToken("Avocado", "AVOC", owner);
+        AssetToken banana = new AssetToken("Banana", "BNNA", owner);
+        AssetToken tomato = new AssetToken("Tomato", "TMTO", owner);
+        console2.log("Salt Address", address(cred));
+        console2.log("avocado Address", address(avocado));
+        console2.log("banana Address", address(banana));
+        console2.log("tomato Address", address(tomato));
 
         BasicDex avocadoCred = new BasicDex(address(cred), address(avocado));
         console2.log("avocado Dex Address", address(avocadoCred));
