@@ -6,6 +6,7 @@ libs = ["lib"]
 
 [rpc_endpoints]
 goerli = "${ALCHEMY_API}"
+gnosis = "${GNOSIS_RPC}"
 
 [etherscan]
 goerli = { key = "${ETHERSCAN_API}"}
