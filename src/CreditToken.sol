@@ -6,9 +6,8 @@ import "lib/solmate/src/auth/Owned.sol";
 
 contract CreditToken is ERC20, Owned {
 
-    constructor(string memory _name, string memory _symbol, address _owner, address _faucet) ERC20(_name, _symbol,18) Owned(_owner) {
+    constructor(string memory _name, string memory _symbol, address _owner) ERC20(_name, _symbol,18) Owned(_owner) {
         _mint(msg.sender, 10_000 ether);
-        _mint(_faucet, 1_000 ether);
     }
 
     function airdropToWallet(address _wallet) external onlyOwner {
