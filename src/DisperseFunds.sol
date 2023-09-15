@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
-// hardhat 
-//import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+// hardhat
+//import "@openzeppelin/contracts/access/AccessControl.sol";
+
 // foundry
-import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 interface IERC20 {
     function transfer(address, uint256) external returns (bool);
@@ -12,20 +13,29 @@ interface IERC20 {
     function balanceOf(address) external view returns (uint256);
 }
 
-contract DisperseFunds is Ownable {
+contract DisperseFunds is AccessControl {
     error InsufficientDai();
     error InsufficientSalt();
 
     address public saltAddr;
+    bytes32 public constant DISPENSER_ROLE = keccak256("DISPENSER_ROLE");
     uint256 public constant SALT_FAUCET_AMOUNT = 25 ether;
     uint256 public constant DAI_FAUCET_AMOUNT = 0.02 ether;
     mapping(address => bool) addressClaimed;
 
     constructor(address _saltAddr) {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         saltAddr = _saltAddr;
     }
 
-    function disperseBatch(address[] calldata users) external onlyOwner {
+    function transferOwnership(address newOwner) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(!hasRole(DEFAULT_ADMIN_ROLE, newOwner), "Ownable: new owner already have admin role");
+
+        grantRole(DEFAULT_ADMIN_ROLE, newOwner);
+        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function disperseBatch(address[] calldata users) external onlyRole(DISPENSER_ROLE) {
         uint256 userLen = users.length;
         if (address(this).balance < userLen * DAI_FAUCET_AMOUNT)
             revert InsufficientDai();

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 import {DisperseFunds} from "../src/DisperseFunds.sol";
@@ -17,15 +17,31 @@ contract DisperseFundsTest is Test {
     address public chad = makeAddr("chad");
     address public dave = makeAddr("dave");
     address public edgar = makeAddr("edgar");
+    address public canDisperse = makeAddr("can disperse");
 
     function setUp() public {
         salt = new CreditToken("Salt", "SALT", address(this));
         disperser = new DisperseFunds(address(salt));
+        disperser.grantRole(keccak256("DISPENSER_ROLE"), address(this));
     }
 
     function initContractFunds() public {
         salt.transfer(address(disperser), 1000 ether);
         address(disperser).call{value: 2 ether}("");
+    }
+
+    function testAddRole() public {
+        initContractFunds();
+        disperser.grantRole(keccak256("DISPENSER_ROLE"), canDisperse);
+        vm.startPrank(canDisperse);
+        address[] memory addrs = new address[](5);
+        addrs[0] = alice;
+        addrs[1] = bob;
+        addrs[2] = chad;
+        addrs[3] = dave;
+        addrs[4] = edgar;
+
+        disperser.disperseBatch(addrs);
     }
 
     function testSetupContracts() public {
@@ -117,7 +133,7 @@ contract DisperseFundsTest is Test {
     }
 
     function testCannotNonOwnerDisperseBatch() public {
-                initContractFunds();
+        initContractFunds();
         address[] memory addrs = new address[](5);
         addrs[0] = alice;
         addrs[1] = bob;
@@ -126,7 +142,7 @@ contract DisperseFundsTest is Test {
         addrs[4] = edgar;
 
         vm.startPrank(alice, alice);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert();
         disperser.disperseBatch(addrs);
     }
 }
