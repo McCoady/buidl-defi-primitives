@@ -20,6 +20,7 @@ contract FruitBasketTest is Test {
     FruitBasket public fruitBasket;
 
     address alice = makeAddr("alice");
+    address bob = makeAddr("bob");
 
     function setUp() public {
         credit = new CreditToken("Credit", "CRED", address(this));
@@ -117,5 +118,115 @@ contract FruitBasketTest is Test {
         assert(avocado.balanceOf(address(fruitBasket)) != 0);
         assert(banana.balanceOf(address(fruitBasket)) != 0);
         assert(tomato.balanceOf(address(fruitBasket)) != 0);
+    }
+    function testCannotClaimWithoutTokens() public {
+        vm.startPrank(alice, alice);
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        vm.stopPrank();
+
+        vm.startPrank(bob, bob);
+        vm.expectRevert();
+        fruitBasket.claim(1 ether);
+    }
+    function testClaimAfterTransferTokens() public {
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        fruitBasket.transfer(alice, 1 ether);
+
+        vm.startPrank(alice, alice);
+        fruitBasket.claim(1 ether);
+        assertEq(fruitBasket.balanceOf(alice), 0);
+        assertEq(avocado.balanceOf(address(fruitBasket)), 0);
+        assertEq(banana.balanceOf(address(fruitBasket)), 0);
+        assertEq(tomato.balanceOf(address(fruitBasket)), 0);
+        assert(credit.balanceOf(alice) != 0);
+    }
+
+    function testClaimAfterMultipleBuys() public {
+        // send bob 1 ether of credit tokens
+        credit.transfer(bob, 1 ether);
+        // buy tokens as alice
+        vm.startPrank(alice, alice);
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        vm.stopPrank();
+
+        // buy tokens as bob
+        vm.startPrank(bob, bob);
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        vm.stopPrank();
+
+        // sell tokens as alice
+        vm.startPrank(alice, alice);
+        fruitBasket.claim(1 ether);
+        assertEq(fruitBasket.balanceOf(alice), 0);
+        assert(credit.balanceOf(alice) > 0.9 ether);
+        assertEq(fruitBasket.totalSupply(), 1 ether);
+        assert(avocado.balanceOf(address(fruitBasket)) != 0);
+        assert(banana.balanceOf(address(fruitBasket)) != 0);
+        assert(tomato.balanceOf(address(fruitBasket)) != 0);     
+    }
+    
+    function testMultipleBuysAndMultipleSells() public { 
+        // send bob 1 ether of credit tokens
+        credit.transfer(bob, 1 ether);
+        // buy tokens as alice
+        vm.startPrank(alice, alice);
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        vm.stopPrank();
+
+        // buy tokens as bob
+        vm.startPrank(bob, bob);
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        fruitBasket.claim(1 ether);
+        assertEq(fruitBasket.balanceOf(bob), 0);
+        assert(credit.balanceOf(bob) > 0.95 ether);
+        assertEq(fruitBasket.totalSupply(), 1 ether);
+        vm.stopPrank();
+
+        // sell tokens as alice
+        vm.startPrank(alice, alice);
+        fruitBasket.claim(1 ether);
+        assertEq(fruitBasket.balanceOf(alice), 0);
+        assert(credit.balanceOf(alice) > 0.9 ether);
+        assertEq(fruitBasket.totalSupply(), 0 ether);
+        assertEq(avocado.balanceOf(address(fruitBasket)), 0);
+        assertEq(banana.balanceOf(address(fruitBasket)), 0);
+        assertEq(tomato.balanceOf(address(fruitBasket)), 0);     
+    }
+    function testCreditOutWhenFruitPriceDrops() public {
+        vm.startPrank(alice, alice);
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        vm.stopPrank();
+        
+        // drop the price of fruit tokens
+        avocadoDex.assetToCredit(5 ether, 0);
+        bananaDex.assetToCredit(5 ether, 0);
+        tomatoDex.assetToCredit(5 ether, 0);
+        
+        vm.startPrank(alice, alice);
+        fruitBasket.claim(1 ether);
+        console2.log("Alice Credits Out:", credit.balanceOf(alice));
+    }
+    
+    function testCreditOutWhenFruitPriceRises() public {
+        vm.startPrank(alice, alice);
+        credit.approve(address(fruitBasket), 1 ether);
+        fruitBasket.buy(1 ether);
+        vm.stopPrank();
+        
+        // drop the price of fruit tokens
+        avocadoDex.creditToAsset(5 ether, 0);
+        bananaDex.creditToAsset(5 ether, 0);
+        tomatoDex.creditToAsset(5 ether, 0);
+        
+        vm.startPrank(alice, alice);
+        fruitBasket.claim(1 ether);
+        console2.log("Alice Credits Out:", credit.balanceOf(alice));
     }
 }
