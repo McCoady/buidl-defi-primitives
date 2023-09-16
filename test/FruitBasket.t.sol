@@ -211,7 +211,10 @@ contract FruitBasketTest is Test {
         
         vm.startPrank(alice, alice);
         fruitBasket.claim(1 ether);
-        console2.log("Alice Credits Out:", credit.balanceOf(alice));
+
+        uint256 aliceCreditsAfter = credit.balanceOf(alice);
+        console2.log("Alice Credits Out:", aliceCreditsAfter);
+        assert(aliceCreditsAfter < 1 ether);
     }
     
     function testCreditOutWhenFruitPriceRises() public {
@@ -220,13 +223,16 @@ contract FruitBasketTest is Test {
         fruitBasket.buy(1 ether);
         vm.stopPrank();
         
-        // drop the price of fruit tokens
+        // raise the price of fruit tokens
         avocadoDex.creditToAsset(5 ether, 0);
         bananaDex.creditToAsset(5 ether, 0);
         tomatoDex.creditToAsset(5 ether, 0);
         
         vm.startPrank(alice, alice);
         fruitBasket.claim(1 ether);
-        console2.log("Alice Credits Out:", credit.balanceOf(alice));
+        
+        uint256 aliceCreditsAfter = credit.balanceOf(alice);
+        console2.log("Alice Credits Out:", aliceCreditsAfter);
+        assert(aliceCreditsAfter > 1 ether);
     }
 }
