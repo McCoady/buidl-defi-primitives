@@ -19,6 +19,7 @@ contract FruitPrediction {
     error WagerAlreadyClaimed();
     error WagerTooOld();
     error UnsuccessfulClaim();
+    error NonExistantId();
 
     event WagerClaimed(
         address indexed user,
@@ -49,7 +50,7 @@ contract FruitPrediction {
     address public immutable CREDIT_ADDR;
     address public immutable ORACLE;
 
-    uint256 wagerId;
+    uint256 currentId;
     mapping(uint256 => Wager) public idToWager;
 
     constructor(address _credit, address _oracle) {
@@ -78,7 +79,7 @@ contract FruitPrediction {
         uint256 targetPrice = BasicDex(ORACLE).creditInPrice(1 ether);
         uint256 expiry = block.timestamp + 10 minutes;
 
-        uint256 thisId = wagerId;
+        uint256 thisId = currentId;
         idToWager[thisId] = Wager(
             targetPrice,
             _direction,
@@ -86,7 +87,7 @@ contract FruitPrediction {
             _wagerAmount,
             false
         );
-        ++wagerId;
+        ++currentId;
         // take funds
         require(
             IERC20(CREDIT_ADDR).transferFrom(
@@ -103,6 +104,7 @@ contract FruitPrediction {
 
     ///@notice allow user to claim successful Wager
     function claim(uint256 _wagerId) external {
+        if (_wagerId >= currentId) revert NonExistantId();
         Wager memory thisWager = idToWager[_wagerId];
         if (thisWager.claimed == true) revert WagerAlreadyClaimed();
         if (thisWager.expiry + 10 minutes < block.timestamp)

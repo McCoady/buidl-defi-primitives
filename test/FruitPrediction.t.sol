@@ -44,7 +44,7 @@ contract FruitPredictionTest is Test {
         );
     }
 
-    function testBetBullClaimNoPriceMove() public {
+    function testCannotBetBullClaimNoPriceMove() public {
         vm.startPrank(alice, alice);
         credit.approve(address(fruitPrediction), 1 ether);
         uint256 thisId = fruitPrediction.betBull(1 ether);
@@ -73,7 +73,7 @@ contract FruitPredictionTest is Test {
         assert(credit.balanceOf(alice) > 10 ether);
     }
 
-    function testBetBullClaimPriceDown() public {
+    function testCannotBetBullClaimPriceDown() public {
         vm.startPrank(alice, alice);
         credit.approve(address(fruitPrediction), 1 ether);
         uint256 thisId = fruitPrediction.betBull(1 ether);
@@ -91,7 +91,7 @@ contract FruitPredictionTest is Test {
         fruitPrediction.claim(thisId);
     }
 
-    function testBetBearClaimNoPriceMove() public {
+    function testCannotBetBearClaimNoPriceMove() public {
         vm.startPrank(alice, alice);
         credit.approve(address(fruitPrediction), 1 ether);
         uint256 thisId = fruitPrediction.betBear(1 ether);
@@ -100,7 +100,7 @@ contract FruitPredictionTest is Test {
         fruitPrediction.claim(thisId);
     }
 
-    function testBetBearClaimPriceUp() public {
+    function testCannotBetBearClaimPriceUp() public {
         vm.startPrank(alice, alice);
         credit.approve(address(fruitPrediction), 1 ether);
         uint256 thisId = fruitPrediction.betBear(1 ether);
@@ -136,5 +136,32 @@ contract FruitPredictionTest is Test {
         console2.log("Alice credit bal after claim", credit.balanceOf(alice));
         assert(credit.balanceOf(address(fruitPrediction)) < 1000 ether);
         assert(credit.balanceOf(alice) > 10 ether);
+    }
+
+    function testCannotClaimTwice() public {
+        vm.startPrank(alice, alice);
+        credit.approve(address(fruitPrediction), 1 ether);
+        uint256 thisId = fruitPrediction.betBull(1 ether);
+        console2.log("Alice credit bal after bet", credit.balanceOf(alice));
+        vm.stopPrank();
+        vm.warp(11 minutes);
+
+        // move avocado price up
+        credit.approve(address(avocadoDex), 1 ether);
+        avocadoDex.creditToAsset(1 ether, 0);
+
+        // claim bet
+        vm.startPrank(alice, alice);
+        fruitPrediction.claim(thisId);
+        console2.log("Alice credit bal after claim", credit.balanceOf(alice));
+        assert(credit.balanceOf(address(fruitPrediction)) < 1000 ether);
+        assert(credit.balanceOf(alice) > 10 ether);
+        vm.expectRevert(FruitPrediction.WagerAlreadyClaimed.selector);
+        fruitPrediction.claim(thisId);
+    }
+
+    function testCannotClaimFalseId() public {
+        vm.expectRevert(FruitPrediction.NonExistantId.selector);
+        fruitPrediction.claim(0);
     }
 }
