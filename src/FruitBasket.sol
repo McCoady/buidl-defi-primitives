@@ -24,6 +24,7 @@ interface BasicDex {
 }
 
 ///@notice Allow user to invest in an evenly distributed stake of fruit tokens
+///@dev 100% feeless, could add fee (but for what?)
 contract FruitBasket is ERC20 {
     error InsufficientBuy();
     error InsufficientClaim();
