@@ -50,12 +50,10 @@ contract FruitBasketV2 is ERC4626 {
         _asset.approve(_tomatoDex, type(uint256).max);
     }
 
-    function totalAssets() public view override returns (uint256) {
+    function totalAssets() public view override returns (uint256 assets) {
         TokenInfo memory avocadoInfo = avocado;
         TokenInfo memory bananaInfo = banana;
         TokenInfo memory tomatoInfo = tomato;
-
-        uint256 assets;
 
         assets += avocadoInfo.dex.assetInPrice(
             avocadoInfo.token.balanceOf(address(this))
@@ -66,26 +64,29 @@ contract FruitBasketV2 is ERC4626 {
         assets += tomatoInfo.dex.assetInPrice(
             tomatoInfo.token.balanceOf(address(this))
         );
-        console2.log("Predicted Assets", assets);
-        return assets;
     }
 
     // sell users cut of fruit tokens
     function beforeWithdraw(uint256 assets, uint256 shares) internal override {
-        TokenInfo[] memory tokens = new TokenInfo[](3);
-        tokens[0] = avocado;
-        tokens[1] = banana;
-        tokens[2] = tomato;
+        TokenInfo memory avocadoInfo = avocado;
+        TokenInfo memory bananaInfo = banana;
+        TokenInfo memory tomatoInfo = tomato;
 
-        // for loop more expensive than 3 calls (~1.5k gas) but code cleaner
-        for (uint256 i; i < 3; ++i) {
-            uint256 tokensToSell = tokens[i].token.balanceOf(address(this)) * shares / totalSupply;
-            uint256 expectedCredits = tokens[i].dex.assetInPrice(tokensToSell);
-            tokens[i].dex.assetToCredit(tokensToSell, expectedCredits);
-        }
+        // sell avocado
+        uint256 tokensToSell = avocadoInfo.token.balanceOf(address(this)) * shares / totalSupply;
+        avocadoInfo.dex.assetToCredit(tokensToSell, avocadoInfo.dex.assetInPrice(tokensToSell));
+
+        // sell banana
+        tokensToSell = bananaInfo.token.balanceOf(address(this)) * shares / totalSupply;
+        bananaInfo.dex.assetToCredit(tokensToSell, bananaInfo.dex.assetInPrice(tokensToSell));
+        
+        // sell tomato
+        tokensToSell = tomatoInfo.token.balanceOf(address(this)) * shares / totalSupply;
+        tomatoInfo.dex.assetToCredit(tokensToSell, tomatoInfo.dex.assetInPrice(tokensToSell));
+
     }
-
-    // buy fruit tokens with users asset
+ 
+    // @TODO how to implement slippage protection?
     function afterDeposit(uint256 assets, uint256 shares) internal override {
         if (assets < 0.1 ether) revert InsufficientBuyAmount();
         
@@ -96,13 +97,11 @@ contract FruitBasketV2 is ERC4626 {
         uint256 third = (assets * 333) / 1000;
         uint256 remaining = assets - third * 2;
 
-        uint256 expectedAvocado = avocadoInfo.dex.creditInPrice(third);
-        BasicDex(avocadoInfo.dex).creditToAsset(third, expectedAvocado);
-
-        uint256 expectedBanana = bananaInfo.dex.creditInPrice(third);
-        BasicDex(bananaInfo.dex).creditToAsset(third, expectedBanana);
-
-        uint256 expectedTomato = tomatoInfo.dex.creditInPrice(third);
-        BasicDex(tomatoInfo.dex).creditToAsset(remaining, expectedTomato);
+        // buy avocado
+        BasicDex(avocadoInfo.dex).creditToAsset(third, 0);
+        // buy banana
+        BasicDex(bananaInfo.dex).creditToAsset(third, 0);
+        // buy tomato
+        BasicDex(tomatoInfo.dex).creditToAsset(remaining, 0);
     }
 }

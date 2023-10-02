@@ -275,7 +275,6 @@ contract BasicDex {
             (creditTokenDeposited * totalLiquidity) /
             creditTokenReserve;
 
-        // TODO: check this is correct
         liquidity[msg.sender] += liquidityMinted;
         totalLiquidity += creditTokenDeposited;
 

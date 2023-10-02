@@ -59,30 +59,6 @@ contract BasicBorrower is ERC4626 {
             revert FundsRequiredForCollateral();
     }
 
-    // function deposit(uint256 amount) external {
-    //     IERC20(token).transferFrom(msg.sender, address(this), amount);
-    //     _mint(msg.sender, amount);
-
-    //     emit LiqudityDeposited(msg.sender, amount);
-    // }
-
-    // /// @notice withdraw liquidity from protocol
-    // function withdraw() external {
-    //     uint256 borrowBalance = balanceOf[msg.sender];
-
-    //     if (borrowBalance == 0) revert InsufficientBalance();
-
-    //     uint256 amountToWithdraw = _getUserLpShare(msg.sender);
-    //     if (userBorrowedAmount[msg.sender] != 0)
-    //         revert FundsRequiredForCollateral();
-
-    //     _burn(msg.sender, borrowBalance);
-
-    //     IERC20(token).transfer(msg.sender, amountToWithdraw);
-
-    //     emit LiquidityWithdrawn(msg.sender, amountToWithdraw);
-    // }
-
     function borrowFunds(uint256 amount) external {
         if (amount < 1 ether) revert InsufficientBorrowAmount();
 
@@ -166,10 +142,8 @@ contract BasicBorrower is ERC4626 {
     /// @param user the address to query
     function _getUserLpShare(address user) internal view returns (uint256) {
         if (balanceOf[user] == 0) return 0;
-        uint256 lpShare = (totalSupply * 100) / balanceOf[user];
         return
-            ((asset.balanceOf(address(this)) + totalCurrentlyBorrowed) /
-                lpShare) * 100;
+            (asset.balanceOf(address(this)) + totalCurrentlyBorrowed) * balanceOf[user] / totalSupply;
     }
 
     function getUserLpShare(address user) external view returns (uint256) {
