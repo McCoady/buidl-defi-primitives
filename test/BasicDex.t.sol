@@ -6,7 +6,7 @@ import {AssetToken} from "../src/tokens/AssetToken.sol";
 import {CreditToken} from "../src/tokens/CreditToken.sol";
 import {BasicDex} from "../src/dex/BasicDex.sol";
 
-contract CounterTest is Test {
+contract BasicDexTest is Test {
     CreditToken public credit;
     AssetToken public wood;
     AssetToken public oil;
