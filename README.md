@@ -13,6 +13,16 @@ Both are basic ERC20 token implementations that allow the owner to airdrop new t
 Credit tokens are used as a defacto unit of account in the buidl game.
 Asset tokens are the tokens that users trade credits for.
 
+### BasicDex
+
+BasicDex is an MVP exchange contract that allows ERC20-ERC20 trading pairs.
+Users can provide liquidity and earn fees.
+The contract also has slippage protection which, where minimum return amounts can be provided by the user.
+
+### BasicDexV2
+
+BasicDexV2 builds upon BasicDex but issues an ERC20 token to liquidity providers to track their share of the token pairs liquidity pool. 
+
 ### DisperseFunds
 
 DisperseFunds is an airdropper contract that allows the gamesmaster to airdrop the chains gas token + CREDITs to players in the game.
