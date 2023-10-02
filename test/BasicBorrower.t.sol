@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {BasicBorrower} from "../src/BasicBorrower.sol";
-import {CreditToken} from "../src/CreditToken.sol";
+import {BasicBorrower} from "../src/borrowing/BasicBorrower.sol";
+import {CreditToken} from "../src/tokens/CreditToken.sol";
 import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 
 contract BasicBorrowerTest is Test {

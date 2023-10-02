@@ -3,10 +3,10 @@ pragma solidity 0.8.19;
 
 import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 import {Test, console2} from "forge-std/Test.sol";
-import {CreditToken} from "../src/CreditToken.sol";
-import {AssetToken} from "../src/AssetToken.sol";
-import {BasicDex} from "../src/BasicDex.sol";
-import {FruitBasketV2} from "../src/FruitBasketV2.sol";
+import {AssetToken} from "../src/tokens/AssetToken.sol";
+import {BasicDex} from "../src/dex/BasicDex.sol";
+import {CreditToken} from "../src/tokens/CreditToken.sol";
+import {FruitBasketV2} from "../src/index-vault/FruitBasketV2.sol";
 
 contract FruitBasketV2Test is Test {
     CreditToken public credit;

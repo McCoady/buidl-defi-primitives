@@ -2,10 +2,10 @@
 pragma solidity 0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {AssetTokenV2} from "../src/AssetTokenV2.sol";
-import {CreditToken} from "../src/CreditToken.sol";
-import {BasicDex} from "../src/BasicDex.sol";
-import {TokenSetupFactory} from "../src/TokenSetupFactory.sol";
+import {AssetTokenV2} from "../src/tokens/AssetTokenV2.sol";
+import {BasicDex} from "../src/dex/BasicDex.sol";
+import {CreditToken} from "../src/tokens/CreditToken.sol";
+import {TokenSetupFactory} from "../src/factories/TokenSetupFactory.sol";
 
 interface IERC20 {
     function balanceOf(address) external view returns(uint256);

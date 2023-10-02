@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {AssetTokenV2} from "./AssetTokenV2.sol";
-import {BasicDex} from "./BasicDex.sol";
+import {AssetTokenV2} from "../tokens/AssetTokenV2.sol";
+import {BasicDex} from "../dex/BasicDex.sol";
 import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 interface CreditToken {

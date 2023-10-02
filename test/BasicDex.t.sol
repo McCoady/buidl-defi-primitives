@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
-import "../src/AssetToken.sol";
-import "../src/CreditToken.sol";
-import "../src/BasicDex.sol";
+import {Test, console2} from "forge-std/Test.sol";
+import {AssetToken} from "../src/tokens/AssetToken.sol";
+import {CreditToken} from "../src/tokens/CreditToken.sol";
+import {BasicDex} from "../src/dex/BasicDex.sol";
 
 contract CounterTest is Test {
     CreditToken public credit;
@@ -114,13 +114,13 @@ contract CounterTest is Test {
     function testCreditTokenPriceCheck() public {
         uint256 creditsOut = creditWood.creditInPrice(1 ether);
         uint256 creditsReceived = creditWood.assetToCredit(1 ether, 0);
-        console.log("Credits Out", creditsOut);
+        console2.log("Credits Out", creditsOut);
         assertEq(creditsOut, creditsReceived);
     }
     function testAssetTokenPriceCheck() public {
         uint256 assetsOut = creditWood.assetInPrice(1 ether);
         uint256 assetsReceived = creditWood.creditToAsset(1 ether, 0);
-        console.log("Assets Out", assetsOut);
+        console2.log("Assets Out", assetsOut);
         assertEq(assetsOut, assetsReceived);
     }
 
@@ -129,7 +129,7 @@ contract CounterTest is Test {
         vm.assume(_in < 100 ether);
         uint256 priceOfCred = creditWood.creditOutPrice(_in);
         uint256 creditsOut = creditWood.creditInPrice(priceOfCred);
-        console.log(creditsOut);
+        console2.log(creditsOut);
         assertEq(creditsOut, _in);
     }
 }

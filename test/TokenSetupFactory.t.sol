@@ -2,10 +2,10 @@
 pragma solidity 0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {TokenSetupFactory} from "../src/TokenSetupFactory.sol";
-import {CreditToken} from "../src/CreditToken.sol";
-import {AssetToken} from "../src/AssetToken.sol";
-import {BasicDex} from "../src/BasicDex.sol";
+import {AssetToken} from "../src/tokens/AssetToken.sol";
+import {BasicDex} from "../src/dex/BasicDex.sol";
+import {CreditToken} from "../src/tokens/CreditToken.sol";
+import {TokenSetupFactory} from "../src/factories/TokenSetupFactory.sol";
 
 contract TokenSetupFactoryTest is Test {
     TokenSetupFactory public factory;

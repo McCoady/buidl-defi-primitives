@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
-import {DisperseFunds} from "../src/DisperseFunds.sol";
-import {CreditToken} from "../src/CreditToken.sol";
+import {DisperseFunds} from "../src/utils/DisperseFunds.sol";
+import {CreditToken} from "../src/tokens/CreditToken.sol";
 
 interface Ownable {
     error OwnableUnauthorizedAccount();

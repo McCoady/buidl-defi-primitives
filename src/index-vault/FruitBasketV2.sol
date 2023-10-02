@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 import {ERC4626} from "lib/solmate/src/mixins/ERC4626.sol";
-import {console2} from "forge-std/console2.sol";
 
 interface BasicDex {
     function creditToAsset(uint256, uint256) external returns (uint256);
