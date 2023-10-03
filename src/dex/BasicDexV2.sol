@@ -19,13 +19,6 @@ interface IERC20 {
 /// @author mctoady.eth
 /// @notice A simple token to token DEX with built in slippage protection
 contract BasicDexV2 is ERC20 {
-    /* ========== CUSTOM ERRORS ========== */
-    error InitError();
-    error TokenTransferError(address _token);
-    error ZeroQuantityError();
-    error SlippageError();
-    error InsufficientLiquidityError(uint256 _liquidityAvailable);
-
     /* ========== STATE VARS ========== */
 
     ERC20 public creditToken;
@@ -52,6 +45,13 @@ contract BasicDexV2 is ERC20 {
         uint256 _assetTokenAmount
     );
 
+    /* ========== CUSTOM ERRORS ========== */
+    error InitError();
+    error TokenTransferError(address _token);
+    error ZeroQuantityError();
+    error SlippageError();
+    error InsufficientLiquidityError(uint256 _liquidityAvailable);
+
     /* ========== CONSTRUCTOR ========== */
     constructor(
         ERC20 _creditToken,
@@ -66,6 +66,8 @@ contract BasicDexV2 is ERC20 {
         creditToken = _creditToken;
         assetToken = _assetToken;
     }
+
+    /* ========== FUNCTIONS ========== */
 
     /// @notice initializes amount of liquidity in the dex, will start with a balanced 1:1 ratio of creditToken to assetToken TODO: make this optional?
     /// @dev user should approve dex contract as spender for assetToken and creditToken before calling init
@@ -270,7 +272,7 @@ contract BasicDexV2 is ERC20 {
         uint256 assetTokenReserve = assetToken.balanceOf(address(this));
         uint256 assetTokenDeposited = (creditTokenDeposited *
             creditTokenReserve) / assetTokenReserve;
-
+            
         liquidityMinted =
             (creditTokenDeposited * totalSupply) /
             creditTokenReserve;        

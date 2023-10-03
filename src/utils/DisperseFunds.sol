@@ -14,20 +14,28 @@ interface IERC20 {
 }
 
 contract DisperseFunds is AccessControl {
-    error InsufficientDai();
-    error InsufficientSalt();
-
+    /* ========== STATE VARS ========== */
     address public saltAddr;
     bytes32 public constant DISPENSER_ROLE = keccak256("DISPENSER_ROLE");
     uint256 public constant SALT_FAUCET_AMOUNT = 25 ether;
     uint256 public constant DAI_FAUCET_AMOUNT = 0.02 ether;
     mapping(address => bool) addressClaimed;
 
+    /* ========== CUSTOM ERRORS ========== */
+    error InsufficientDai();
+    error InsufficientSalt();
+
+    /* ========== CONSTRUCTOR ========== */
     constructor(address _saltAddr) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         saltAddr = _saltAddr;
     }
 
+    /* ========== FUNCTIONS ========== */
+
+    /// @notice moves the DEFAULT_ADMIN_ROLE to a new address
+    /// @dev renounces admin privilages of sender
+    /// @param newOwner address to give DEFAULT_ADMIN_ROLE
     function transferOwnership(address newOwner) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(!hasRole(DEFAULT_ADMIN_ROLE, newOwner), "Ownable: new owner already have admin role");
 
@@ -35,6 +43,9 @@ contract DisperseFunds is AccessControl {
         renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /// @notice send salt and dai to a batch of addresses
+    /// @dev if an address has already claimed the address is skipped rather than revert
+    /// @param users array of user addresses to send funds
     function disperseBatch(address[] calldata users) external onlyRole(DISPENSER_ROLE) {
         uint256 userLen = users.length;
         if (address(this).balance < userLen * DAI_FAUCET_AMOUNT)

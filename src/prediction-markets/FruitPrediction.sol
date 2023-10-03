@@ -14,38 +14,20 @@ interface BasicDex {
 ///@notice Allow users to wager their predicted price of a fruit token at a future point in time
 ///@dev Uses dex as oracle so vulnerable to flash loans
 contract FruitPrediction {
-    error NoHighRollers();
-    error ZeroWagerAmount();
-    error WagerAlreadyClaimed();
-    error WagerTooOld();
-    error UnsuccessfulClaim();
-    error NonExistantId();
-
-    event WagerClaimed(
-        address indexed user,
-        TradeDirection direction,
-        uint256 wagerAmount
-    );
-    event WagerMade(
-        address indexed user,
-        TradeDirection direction,
-        uint256 wagerAmount
-    );
-
-    // prediction direction
-    enum TradeDirection {
-        BULL,
-        BEAR
-    }
-
+    /* ========== TYPES ========== */
     struct Wager {
         uint256 targetPrice;
-        TradeDirection direction;
+        WagerDirection direction;
         uint256 expiry;
         uint256 amount;
         bool claimed;
     }
-
+    
+    enum WagerDirection {
+        BULL,
+        BEAR
+    }
+    /* ========== STATE VARS ========== */
     uint256 public constant MAX_WAGER = 10 ether;
     address public immutable CREDIT_ADDR;
     address public immutable ORACLE;
@@ -53,25 +35,55 @@ contract FruitPrediction {
     uint256 currentId;
     mapping(uint256 => Wager) public idToWager;
 
+    /* ========== EVENTS ========== */
+    event WagerClaimed(
+        address indexed user,
+        WagerDirection direction,
+        uint256 wagerAmount
+    );
+    event WagerMade(
+        address indexed user,
+        WagerDirection direction,
+        uint256 wagerAmount
+    );
+
+    /* ========== CUSTOM ERRORS ========== */
+    error NoHighRollers();
+    error ZeroWagerAmount();
+    error WagerAlreadyClaimed();
+    error WagerTooOld();
+    error UnsuccessfulClaim();
+    error NonExistantId();
+
+    /* ========== CONSTRUCTOR ========== */
     constructor(address _credit, address _oracle) {
         CREDIT_ADDR = _credit;
         ORACLE = _oracle;
     }
 
-    ///@notice allow user to make Bull Wager
+    /* ========== FUNCTIONS ========== */
+
+    /// @notice allow user to make Bull Wager
+    /// @param _wagerAmount amount to wager
+    /// @return this bets id number
     function betBull(uint256 _wagerAmount) external returns (uint256) {
-        return _bet(_wagerAmount, TradeDirection.BULL);
+        return _bet(_wagerAmount, WagerDirection.BULL);
     }
 
-    ///@notice allow user to make Bear Wager
+    /// @notice allow user to make Bear Wager
+    /// @param _wagerAmount amount to wager
+    /// @return this bets id number
     function betBear(uint256 _wagerAmount) external returns (uint256) {
-        return _bet(_wagerAmount, TradeDirection.BEAR);
+        return _bet(_wagerAmount, WagerDirection.BEAR);
     }
 
-    ///@notice internal wager function
+    /// @notice internal wager function
+    /// @param _wagerAmount amount to wager
+    /// @param _direction the trade direction of the wager (bull or bear)
+    /// @return this bets id number
     function _bet(
         uint256 _wagerAmount,
-        TradeDirection _direction
+        WagerDirection _direction
     ) internal returns (uint256) {
         if (_wagerAmount == 0) revert ZeroWagerAmount();
         if (_wagerAmount > MAX_WAGER) revert NoHighRollers();
@@ -102,7 +114,8 @@ contract FruitPrediction {
         return thisId;
     }
 
-    ///@notice allow user to claim successful Wager
+    /// @notice allow user to claim successful Wager
+    /// @param _wagerId the wager id to claim
     function claim(uint256 _wagerId) external {
         if (_wagerId >= currentId) revert NonExistantId();
         Wager memory thisWager = idToWager[_wagerId];
@@ -112,7 +125,7 @@ contract FruitPrediction {
 
         // call dex to get current price in $CREDIT
         uint256 currentPrice = BasicDex(ORACLE).creditInPrice(1 ether);
-        if (thisWager.direction == TradeDirection.BULL) {
+        if (thisWager.direction == WagerDirection.BULL) {
             if (thisWager.targetPrice <= currentPrice)
                 revert UnsuccessfulClaim();
         } else {
@@ -125,14 +138,15 @@ contract FruitPrediction {
         idToWager[_wagerId].claimed = true;
         require(IERC20(CREDIT_ADDR).transfer(msg.sender, claimAmount));
 
-        emit WagerClaimed(
-            msg.sender,
-            thisWager.direction,
-            thisWager.amount
-        );
+        emit WagerClaimed(msg.sender, thisWager.direction, thisWager.amount);
     }
 
-    function checkWagerExpiry(uint256 _wagerId) external view returns(uint256) {
+    /// @notice allows users to check when a wager expires
+    /// @param _wagerId the wager id to check
+    /// @return timestamp the wager expires
+    function checkWagerExpiry(
+        uint256 _wagerId
+    ) external view returns (uint256) {
         Wager memory wager = idToWager[_wagerId];
         return wager.expiry;
     }

@@ -23,23 +23,27 @@ interface BasicDex {
     function assetInPrice(uint256) external view returns (uint256);
 }
 
-///@notice Allow user to invest in an evenly distributed stake of fruit tokens
-///@dev 100% feeless, could add fee (but for what?)
+/// @notice Allow user to invest in an evenly distributed stake of fruit tokens
+/// @dev 100% feeless
 contract FruitBasket is ERC20 {
-    error InsufficientBuy();
-    error InsufficientClaim();
+    /* ========== TYPES ========== */
+    struct TokenInfo {
+        IERC20 token;
+        BasicDex dex;
+    }
 
+    /* ========== STATE VARS ========== */
     TokenInfo avocado;
     TokenInfo banana;
     TokenInfo tomato;
 
     IERC20 public creditToken;
 
-    struct TokenInfo {
-        IERC20 token;
-        BasicDex dex;
-    }
+    /* ========== CUSTOM ERRORS ========== */
+    error InsufficientBuy();
+    error InsufficientClaim();
 
+    /* ========== CONSTRUCTOR ========== */
     constructor(
         address _avocadoTkn,
         address _bananaTkn,
@@ -63,8 +67,10 @@ contract FruitBasket is ERC20 {
         creditToken.approve(_tomatoDex, type(uint256).max);
     }
 
-    ///@notice Allow users to buy amount of stake in the fruitbasket
-    ///@param amount how much credit to split between the 3 fruits
+    /* ========== FUNCTIONS ========== */
+
+    /// @notice Allow users to buy amount of stake in the fruitbasket
+    /// @param amount how much credit to split between the 3 fruits
     function buy(uint256 amount) external {
         if (amount < 0.1 ether) revert InsufficientBuy();
         // take amount credits from user
@@ -93,12 +99,12 @@ contract FruitBasket is ERC20 {
         _mint(msg.sender, amount);
     }
 
-    ///@notice allow users to buy an amount of stake with prefined accepted token slippage
-    ///@dev the frontend can calculate appropriate slippage offchain to save gas
-    ///@param amount how much credit to split between the 3 fruits
-    ///@param minAvo minimum acceptable avocado to purchase
-    ///@param minBan minimum acceptable banana to purchase
-    ///@param minTom minimum acceptable tomato to purchase
+    /// @notice allow users to buy an amount of stake with prefined accepted token slippage
+    /// @dev the frontend can calculate appropriate slippage offchain to save gas
+    /// @param amount how much credit to split between the 3 fruits
+    /// @param minAvo minimum acceptable avocado to purchase
+    /// @param minBan minimum acceptable banana to purchase
+    /// @param minTom minimum acceptable tomato to purchase
     function buySetMin(
         uint256 amount,
         uint256 minAvo,
@@ -126,8 +132,8 @@ contract FruitBasket is ERC20 {
         _mint(msg.sender, amount);
     }
 
-    ///@notice burns users fruit basket tokens, converts their % of the totalSupply from fruits > credit
-    ///@param amount how much fruit basket token to convert
+    /// @notice burns users fruit basket tokens, converts their % of the totalSupply from fruits > credit
+    /// @param amount how much fruit basket token to convert
     function claim(uint256 amount) external {
         if (amount < 0.1 ether) revert InsufficientClaim();
 

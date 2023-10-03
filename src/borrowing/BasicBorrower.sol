@@ -22,6 +22,23 @@ struct BorrowInfo {
 }
 
 contract BasicBorrower is ERC4626 {
+    /* ========== STATE VARS ========== */
+    uint256 constant STATIC_BORROW_PCT = 5; // 0.5%
+    uint256 constant FEE_PER_HOUR = 1; // 0.1%
+
+    uint256 public totalCurrentlyBorrowed;
+    uint256 loanId;
+
+    mapping(address => uint256) public userBorrowedAmount;
+    mapping(uint256 => BorrowInfo) public borrowIdToInfo;
+
+    /* ========== EVENTS ========== */
+    event LiqudityDeposited(address indexed user, uint256 amount);
+    event LiquidityWithdrawn(address indexed user, uint256 amount);
+    event FundsBorrowed(address indexed user, uint256 amount);
+    event FundsRepaid(address indexed user, uint256 amount);
+
+    /* ========== CUSTOM ERRORS ========== */
     error AlreadyInit();
     error BorrowNotUnderwater();
     error FundsRequiredForCollateral();
@@ -29,36 +46,34 @@ contract BasicBorrower is ERC4626 {
     error InsufficientBorrowAmount();
     error InsufficientCollateral();
     error InsufficientWithdrawal();
-
-    event LiqudityDeposited(address indexed user, uint256 amount);
-    event LiquidityWithdrawn(address indexed user, uint256 amount);
-    event FundsBorrowed(address indexed user, uint256 amount);
-    event FundsRepaid(address indexed user, uint256 amount);
-
-    uint256 constant STATIC_BORROW_PCT = 5; // 0.5%
-    uint256 constant FEE_PER_HOUR = 1; // 0.1%
-
-    uint256 public totalCurrentlyBorrowed;
-
-    uint256 loanId;
-
-    mapping(address => uint256) public userBorrowedAmount;
-    mapping(uint256 => BorrowInfo) public borrowIdToInfo;
-
+    
+    /* ========== CONSTRUCTOR ========== */
     constructor(
         ERC20 _asset,
         string memory _name,
         string memory _symbol
     ) ERC4626(_asset, _name, _symbol) {}
 
+    /* ========== FUNCTIONS ========== */
+
+    /// @notice nothing required in current form
+    /// @notice assets not required
+    /// @notice shares not required
     function afterDeposit(uint256 assets, uint256 shares) internal override {}
 
+    /// @notice check user doesn't have outstanding borrows before they withdraw their collateral
+    /// @param assets not required
+    /// @param shares not required
     function beforeWithdraw(uint256 assets, uint256 shares) internal override {
         // TODO: do maths to check if user has required liquidity
         if (userBorrowedAmount[msg.sender] != 0)
             revert FundsRequiredForCollateral();
     }
 
+
+    /// @notice borrow funds from the pool
+    /// @param amount how much to borrow
+    /// @dev user must have provided 1.2x their borrow amount as collateral
     function borrowFunds(uint256 amount) external {
         if (amount < 1 ether) revert InsufficientBorrowAmount();
 
@@ -85,6 +100,9 @@ contract BasicBorrower is ERC4626 {
         emit FundsBorrowed(msg.sender, amount);
     }
 
+    // @TODO better way to return? needing to know your borrow id is annoying
+    /// @notice allow users to return borrowed funds
+    /// @param id the id number of their borrow
     function returnFunds(uint256 id) external {
         uint256 totalDue = _calculateReturnFee(id);
 
@@ -99,6 +117,10 @@ contract BasicBorrower is ERC4626 {
         emit FundsRepaid(msg.sender, totalDue);
     }
 
+    /// @notice allows borrows which have fallen below the liquidation threshold to be liquidated
+    /// @dev if users provided collateral is less than 1.05x their borrow amount they can be liquidated
+    /// @dev liquidator receives 2% of the liquidation amount as reward
+    /// @param id the borrow id of the borrow to be liquidated
     function liquidate(uint256 id) external {
         BorrowInfo memory thisBorrow = borrowIdToInfo[id];
         uint256 borrowerLpShare = _getUserLpShare(thisBorrow.borrower);
@@ -115,6 +137,9 @@ contract BasicBorrower is ERC4626 {
         asset.transfer(msg.sender, callerReward);
     }
 
+    /// @notice calculates the current required funds to pay back a borrow
+    /// @param id the borrow id of the borrow to calculate
+    /// @return total amount to repay 
     function _calculateReturnFee(uint256 id) internal view returns (uint256) {
         BorrowInfo memory thisBorrow = borrowIdToInfo[id];
         uint256 amountWithStaticFee = thisBorrow.amount +
@@ -130,10 +155,13 @@ contract BasicBorrower is ERC4626 {
         return totalDue;
     }
 
+    /// @notice external _calculateReturnFee
     function calculateReturnFee(uint256 id) external view returns (uint256) {
         return _calculateReturnFee(id);
     }
 
+    /// @notice total amount of assets managed by the contract
+    /// @dev includes current balance + all outstanding borrows
     function totalAssets() public view override returns (uint256) {
         return asset.balanceOf((address(this))) + totalCurrentlyBorrowed;
     }
@@ -146,6 +174,7 @@ contract BasicBorrower is ERC4626 {
             (asset.balanceOf(address(this)) + totalCurrentlyBorrowed) * balanceOf[user] / totalSupply;
     }
 
+    /// @notice external _getUserLpShare
     function getUserLpShare(address user) external view returns (uint256) {
         return _getUserLpShare(user);
     }

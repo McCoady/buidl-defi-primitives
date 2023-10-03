@@ -15,16 +15,20 @@ interface BasicDex {
 }
 
 contract FruitBasketV2 is ERC4626 {
-    error InsufficientBuyAmount();
-    TokenInfo avocado;
-    TokenInfo banana;
-    TokenInfo tomato;
-
+    /* ========== TYPES ========== */
     struct TokenInfo {
         ERC20 token;
         BasicDex dex;
     }
+    /* ========== STATE VARS ========== */
+    TokenInfo avocado;
+    TokenInfo banana;
+    TokenInfo tomato;
 
+    /* ========== CUSTOM ERRORS ========== */
+    error InsufficientBuyAmount();
+
+    /* ========== CONSTRUCTOR ========== */
     constructor(
         address _avocadoTkn,
         address _bananaTkn,
@@ -49,6 +53,12 @@ contract FruitBasketV2 is ERC4626 {
         _asset.approve(_tomatoDex, type(uint256).max);
     }
 
+    /* ========== FUNCTIONS ========== */
+
+    // @TODO any issues with slippage if total assets is high?
+    /// @notice total asset value of vault
+    /// @dev gets current sale price of all fruit tokens in the vault
+    /// @return assets total amount of assets (CREDIT)
     function totalAssets() public view override returns (uint256 assets) {
         TokenInfo memory avocadoInfo = avocado;
         TokenInfo memory bananaInfo = banana;
@@ -65,34 +75,55 @@ contract FruitBasketV2 is ERC4626 {
         );
     }
 
-    // sell users cut of fruit tokens
+    /// @notice things required before a user withdraws
+    /// @dev function sells the required amount of fruit tokens to get correct assets to return to user
+    /// @param assets amount of assets they'll receive
+    /// @param shares amount of shares they're redeeming
     function beforeWithdraw(uint256 assets, uint256 shares) internal override {
         TokenInfo memory avocadoInfo = avocado;
         TokenInfo memory bananaInfo = banana;
         TokenInfo memory tomatoInfo = tomato;
 
         // sell avocado
-        uint256 tokensToSell = avocadoInfo.token.balanceOf(address(this)) * shares / totalSupply;
-        avocadoInfo.dex.assetToCredit(tokensToSell, avocadoInfo.dex.assetInPrice(tokensToSell));
+        uint256 tokensToSell = (avocadoInfo.token.balanceOf(address(this)) *
+            shares) / totalSupply;
+        avocadoInfo.dex.assetToCredit(
+            tokensToSell,
+            avocadoInfo.dex.assetInPrice(tokensToSell)
+        );
 
         // sell banana
-        tokensToSell = bananaInfo.token.balanceOf(address(this)) * shares / totalSupply;
-        bananaInfo.dex.assetToCredit(tokensToSell, bananaInfo.dex.assetInPrice(tokensToSell));
-        
-        // sell tomato
-        tokensToSell = tomatoInfo.token.balanceOf(address(this)) * shares / totalSupply;
-        tomatoInfo.dex.assetToCredit(tokensToSell, tomatoInfo.dex.assetInPrice(tokensToSell));
+        tokensToSell =
+            (bananaInfo.token.balanceOf(address(this)) * shares) /
+            totalSupply;
+        bananaInfo.dex.assetToCredit(
+            tokensToSell,
+            bananaInfo.dex.assetInPrice(tokensToSell)
+        );
 
+        // sell tomato
+        tokensToSell =
+            (tomatoInfo.token.balanceOf(address(this)) * shares) /
+            totalSupply;
+        tomatoInfo.dex.assetToCredit(
+            tokensToSell,
+            tomatoInfo.dex.assetInPrice(tokensToSell)
+        );
     }
- 
+
     // @TODO how to implement slippage protection?
+    /// @notice things required after a user deposits
+    /// @dev function splits assets deposited 3 ways to purchase the 3 fruit tokens
+    /// @param assets amount of assets they're depositing
+    /// @param shares amount of shares they'll receive
     function afterDeposit(uint256 assets, uint256 shares) internal override {
         if (assets < 0.1 ether) revert InsufficientBuyAmount();
-        
+
         TokenInfo memory avocadoInfo = avocado;
         TokenInfo memory bananaInfo = banana;
         TokenInfo memory tomatoInfo = tomato;
 
+        // @TODO use fixed point maths to more accurately divide by 3
         uint256 third = (assets * 333) / 1000;
         uint256 remaining = assets - third * 2;
 

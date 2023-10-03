@@ -17,13 +17,6 @@ interface IERC20 {
 /// @author mctoady.eth
 /// @notice A simple token to token DEX with built in slippage protection
 contract BasicDex {
-    /* ========== CUSTOM ERRORS ========== */
-    error InitError();
-    error TokenTransferError(address _token);
-    error ZeroQuantityError();
-    error SlippageError();
-    error InsufficientLiquidityError(uint256 _liquidityAvailable);
-
     /* ========== STATE VARS ========== */
 
     IERC20 public creditToken;
@@ -53,11 +46,20 @@ contract BasicDex {
         uint256 _assetTokenAmount
     );
 
+    /* ========== CUSTOM ERRORS ========== */
+    error InitError();
+    error TokenTransferError(address _token);
+    error ZeroQuantityError();
+    error SlippageError();
+    error InsufficientLiquidityError(uint256 _liquidityAvailable);
+
     /* ========== CONSTRUCTOR ========== */
     constructor(address _creditToken, address _assetToken) {
         creditToken = IERC20(_creditToken);
         assetToken = IERC20(_assetToken);
     }
+
+    /* ========== FUNCTIONS ========== */
 
     /// @notice initializes amount of liquidity in the dex, will start with a balanced 1:1 ratio of creditToken to assetToken TODO: make this optional?
     /// @dev user should approve dex contract as spender for assetToken and creditToken before calling init
