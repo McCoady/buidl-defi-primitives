@@ -23,8 +23,9 @@ interface BasicDex {
     function assetInPrice(uint256) external view returns (uint256);
 }
 
-/// @notice Allow user to invest in an evenly distributed stake of fruit tokens
-/// @dev 100% feeless
+/// @title A simple index fund contract
+/// @author mctoady.eth
+/// @notice allows users to invest in 3 separate ERC20 tokens
 contract FruitBasket is ERC20 {
     /* ========== TYPES ========== */
     struct TokenInfo {

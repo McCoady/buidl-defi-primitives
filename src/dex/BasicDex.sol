@@ -13,7 +13,7 @@ interface IERC20 {
     function balanceOf(address user) external view returns (uint256);
 }
 
-/// @title Token-Token DEX
+/// @title A simple ERC20-ERC20 DEX
 /// @author mctoady.eth
 /// @notice A simple token to token DEX with built in slippage protection
 contract BasicDex {

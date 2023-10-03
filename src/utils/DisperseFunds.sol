@@ -13,6 +13,8 @@ interface IERC20 {
     function balanceOf(address) external view returns (uint256);
 }
 
+/// @title an airdropper contract that disperses both the native gas token & an ERC20 
+/// @author mctoady.eth
 contract DisperseFunds is AccessControl {
     /* ========== STATE VARS ========== */
     address public saltAddr;

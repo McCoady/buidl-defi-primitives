@@ -14,6 +14,9 @@ interface BasicDex {
     function assetInPrice(uint256) external view returns (uint256);
 }
 
+/// @title A simple index fund contract using the ERC4626 vault standard
+/// @author mctoady.eth
+/// @notice allows users to invest in 3 separate ERC20 tokens
 contract FruitBasketV2 is ERC4626 {
     /* ========== TYPES ========== */
     struct TokenInfo {

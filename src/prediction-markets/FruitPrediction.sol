@@ -11,8 +11,10 @@ interface BasicDex {
     function creditInPrice(uint256) external view returns (uint256);
 }
 
-///@notice Allow users to wager their predicted price of a fruit token at a future point in time
-///@dev Uses dex as oracle so vulnerable to flash loans
+/// @title A simple prediction market implementation
+/// @author mctoady.eth
+/// @notice Allow users to wager their predicted price of a fruit token at a future point in time
+/// @dev Uses dex as oracle so vulnerable to flash loans
 contract FruitPrediction {
     /* ========== TYPES ========== */
     struct Wager {
@@ -22,7 +24,7 @@ contract FruitPrediction {
         uint256 amount;
         bool claimed;
     }
-    
+
     enum WagerDirection {
         BULL,
         BEAR
@@ -77,43 +79,6 @@ contract FruitPrediction {
         return _bet(_wagerAmount, WagerDirection.BEAR);
     }
 
-    /// @notice internal wager function
-    /// @param _wagerAmount amount to wager
-    /// @param _direction the trade direction of the wager (bull or bear)
-    /// @return this bets id number
-    function _bet(
-        uint256 _wagerAmount,
-        WagerDirection _direction
-    ) internal returns (uint256) {
-        if (_wagerAmount == 0) revert ZeroWagerAmount();
-        if (_wagerAmount > MAX_WAGER) revert NoHighRollers();
-        // call dex to get current price in $CREDIT
-        uint256 targetPrice = BasicDex(ORACLE).creditInPrice(1 ether);
-        uint256 expiry = block.timestamp + 10 minutes;
-
-        uint256 thisId = currentId;
-        idToWager[thisId] = Wager(
-            targetPrice,
-            _direction,
-            expiry,
-            _wagerAmount,
-            false
-        );
-        ++currentId;
-        // take funds
-        require(
-            IERC20(CREDIT_ADDR).transferFrom(
-                msg.sender,
-                address(this),
-                _wagerAmount
-            )
-        );
-
-        emit WagerMade(msg.sender, _direction, _wagerAmount);
-
-        return thisId;
-    }
-
     /// @notice allow user to claim successful Wager
     /// @param _wagerId the wager id to claim
     function claim(uint256 _wagerId) external {
@@ -149,5 +114,42 @@ contract FruitPrediction {
     ) external view returns (uint256) {
         Wager memory wager = idToWager[_wagerId];
         return wager.expiry;
+    }
+
+    /// @notice internal wager function
+    /// @param _wagerAmount amount to wager
+    /// @param _direction the trade direction of the wager (bull or bear)
+    /// @return this bets id number
+    function _bet(
+        uint256 _wagerAmount,
+        WagerDirection _direction
+    ) internal returns (uint256) {
+        if (_wagerAmount == 0) revert ZeroWagerAmount();
+        if (_wagerAmount > MAX_WAGER) revert NoHighRollers();
+        // call dex to get current price in $CREDIT
+        uint256 targetPrice = BasicDex(ORACLE).creditInPrice(1 ether);
+        uint256 expiry = block.timestamp + 10 minutes;
+
+        uint256 thisId = currentId;
+        idToWager[thisId] = Wager(
+            targetPrice,
+            _direction,
+            expiry,
+            _wagerAmount,
+            false
+        );
+        ++currentId;
+        // take funds
+        require(
+            IERC20(CREDIT_ADDR).transferFrom(
+                msg.sender,
+                address(this),
+                _wagerAmount
+            )
+        );
+
+        emit WagerMade(msg.sender, _direction, _wagerAmount);
+
+        return thisId;
     }
 }

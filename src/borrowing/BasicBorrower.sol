@@ -21,6 +21,9 @@ struct BorrowInfo {
     address borrower;
 }
 
+/// @title A simple borrowing and lending contract
+/// @author mctoady.eth
+/// @notice A stripped back implemenetion of borrowing/lending with liquidiation
 contract BasicBorrower is ERC4626 {
     /* ========== STATE VARS ========== */
     uint256 constant STATIC_BORROW_PCT = 5; // 0.5%
@@ -46,7 +49,7 @@ contract BasicBorrower is ERC4626 {
     error InsufficientBorrowAmount();
     error InsufficientCollateral();
     error InsufficientWithdrawal();
-    
+
     /* ========== CONSTRUCTOR ========== */
     constructor(
         ERC20 _asset,
@@ -55,21 +58,6 @@ contract BasicBorrower is ERC4626 {
     ) ERC4626(_asset, _name, _symbol) {}
 
     /* ========== FUNCTIONS ========== */
-
-    /// @notice nothing required in current form
-    /// @notice assets not required
-    /// @notice shares not required
-    function afterDeposit(uint256 assets, uint256 shares) internal override {}
-
-    /// @notice check user doesn't have outstanding borrows before they withdraw their collateral
-    /// @param assets not required
-    /// @param shares not required
-    function beforeWithdraw(uint256 assets, uint256 shares) internal override {
-        // TODO: do maths to check if user has required liquidity
-        if (userBorrowedAmount[msg.sender] != 0)
-            revert FundsRequiredForCollateral();
-    }
-
 
     /// @notice borrow funds from the pool
     /// @param amount how much to borrow
@@ -137,9 +125,35 @@ contract BasicBorrower is ERC4626 {
         asset.transfer(msg.sender, callerReward);
     }
 
+    /// @notice external _calculateReturnFee
+    function calculateReturnFee(uint256 id) external view returns (uint256) {
+        return _calculateReturnFee(id);
+    }
+
+    /// @notice total amount of assets managed by the contract
+    /// @dev includes current balance + all outstanding borrows
+    function totalAssets() public view override returns (uint256) {
+        return asset.balanceOf((address(this))) + totalCurrentlyBorrowed;
+    }
+
+    /// @notice external _getUserLpShare
+    /// @param user address of user
+    function getUserLpShare(address user) external view returns (uint256) {
+        return _getUserLpShare(user);
+    }
+
+    /// @notice returns amount of CREDIT tokens redeemable by user
+    /// @param user the address to query
+    function _getUserLpShare(address user) internal view returns (uint256) {
+        if (balanceOf[user] == 0) return 0;
+        return
+            ((asset.balanceOf(address(this)) + totalCurrentlyBorrowed) *
+                balanceOf[user]) / totalSupply;
+    }
+
     /// @notice calculates the current required funds to pay back a borrow
     /// @param id the borrow id of the borrow to calculate
-    /// @return total amount to repay 
+    /// @return total amount to repay
     function _calculateReturnFee(uint256 id) internal view returns (uint256) {
         BorrowInfo memory thisBorrow = borrowIdToInfo[id];
         uint256 amountWithStaticFee = thisBorrow.amount +
@@ -155,27 +169,17 @@ contract BasicBorrower is ERC4626 {
         return totalDue;
     }
 
-    /// @notice external _calculateReturnFee
-    function calculateReturnFee(uint256 id) external view returns (uint256) {
-        return _calculateReturnFee(id);
-    }
+    /// @notice nothing required in current form
+    /// @notice assets not required
+    /// @notice shares not required
+    function afterDeposit(uint256 assets, uint256 shares) internal override {}
 
-    /// @notice total amount of assets managed by the contract
-    /// @dev includes current balance + all outstanding borrows
-    function totalAssets() public view override returns (uint256) {
-        return asset.balanceOf((address(this))) + totalCurrentlyBorrowed;
-    }
-
-    /// @notice returns amount of CREDIT tokens redeemable by user
-    /// @param user the address to query
-    function _getUserLpShare(address user) internal view returns (uint256) {
-        if (balanceOf[user] == 0) return 0;
-        return
-            (asset.balanceOf(address(this)) + totalCurrentlyBorrowed) * balanceOf[user] / totalSupply;
-    }
-
-    /// @notice external _getUserLpShare
-    function getUserLpShare(address user) external view returns (uint256) {
-        return _getUserLpShare(user);
+    /// @notice check user doesn't have outstanding borrows before they withdraw their collateral
+    /// @param assets not required
+    /// @param shares not required
+    function beforeWithdraw(uint256 assets, uint256 shares) internal override {
+        // TODO: do maths to check if user has required liquidity
+        if (userBorrowedAmount[msg.sender] != 0)
+            revert FundsRequiredForCollateral();
     }
 }

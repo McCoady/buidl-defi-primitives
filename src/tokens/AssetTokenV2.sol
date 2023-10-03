@@ -4,6 +4,8 @@ pragma solidity 0.8.19;
 import "lib/solmate/src/tokens/ERC20.sol";
 import "lib/solmate/src/auth/Owned.sol";
 
+/// @title a basic ERC20 implementation with added owner mint functionality
+/// @author mctoady.eth
 contract AssetTokenV2 is ERC20, Owned {
     /* ========== CONSTRUCTOR ========== */
     constructor(

@@ -6,10 +6,14 @@ import {BasicDex} from "../dex/BasicDex.sol";
 import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 interface CreditToken {
-    function transferFrom(address, address, uint256) external returns(bool);
-    function approve(address, uint256) external returns(bool);
+    function transferFrom(address, address, uint256) external returns (bool);
+
+    function approve(address, uint256) external returns (bool);
 }
 
+/// @title A factory contract to deploy tokens and a credit/token dex simultaneously
+/// @author mctoady.eth
+/// @notice deploys token, credit/token dex & initialises the dex liquidity, also tracks deployed tokens/dexes
 contract TokenSetupFactory is AccessControl {
     /* ========== TYPES ========== */
     struct TokenInfo {
@@ -18,9 +22,9 @@ contract TokenSetupFactory is AccessControl {
     }
 
     /* ========== STATE VARS ========== */
-    address public creditToken;    
+    address public creditToken;
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
-    
+
     TokenInfo[] public deployedTokens;
     uint256 public tokensDeployed;
     mapping(address => address) public getDexFromToken;
@@ -43,14 +47,28 @@ contract TokenSetupFactory is AccessControl {
     /// @param owner owner of the new token contract
     /// @param dexLiquidity amount of liquidity to init the dex with
     /// @dev caller must own at least dexLiquidity amount of credit tokens to initialize the dex with that amount
-    function setupNewTokenDexCombo(string calldata name, string calldata symbol, address owner, uint256 dexLiquidity) external onlyRole(CREATOR_ROLE) {
-        AssetTokenV2 newToken = new AssetTokenV2(name, symbol, owner, dexLiquidity);
+    function setupNewTokenDexCombo(
+        string calldata name,
+        string calldata symbol,
+        address owner,
+        uint256 dexLiquidity
+    ) external onlyRole(CREATOR_ROLE) {
+        AssetTokenV2 newToken = new AssetTokenV2(
+            name,
+            symbol,
+            owner,
+            dexLiquidity
+        );
         BasicDex newDex = new BasicDex(creditToken, address(newToken));
-        CreditToken(creditToken).transferFrom(msg.sender, address(this), dexLiquidity);
+        CreditToken(creditToken).transferFrom(
+            msg.sender,
+            address(this),
+            dexLiquidity
+        );
         CreditToken(creditToken).approve(address(newDex), dexLiquidity);
         newToken.approve(address(newDex), dexLiquidity);
         newDex.init(dexLiquidity);
-        
+
         ++tokensDeployed;
         deployedTokens.push(TokenInfo(address(newToken), address(newDex)));
         getDexFromToken[address(newToken)] = address(newDex);
@@ -58,8 +76,10 @@ contract TokenSetupFactory is AccessControl {
 
     /// @notice allows the retreival of deployed token information by index
     /// @param index the index to return
-    /// @return deployed token information of that index 
-    function getTokenInfoByIndex(uint256 index) external view returns(TokenInfo memory) {
+    /// @return deployed token information of that index
+    function getTokenInfoByIndex(
+        uint256 index
+    ) external view returns (TokenInfo memory) {
         if (index >= tokensDeployed) revert InvalidIndex();
         return deployedTokens[index];
     }
