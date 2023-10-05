@@ -54,3 +54,14 @@ Users can deposit liquidity which other users can then borrow from.
 Users borrows must be overcollateralised (they must supply more liquidity than they borrow).
 If users debt gets close to being unpayable by their remaining liquidity their borrow can be liquidated.
 BasicBorrower's liquidity is managed using the ERC4626 vault standard.
+
+### BasicLPLock
+
+Allows a user to lock ERC20 tokens for an arbitrary amount of time (7 days).
+No fees or rewards are issues.
+
+### LPStakerLock
+
+Allows a user to lock a specific LP token for an arbitrary amount of time (7 days).
+Users are issued 5% of their locked amount in a reward token upon completion of their lock time.
+Redeeming LP and redeeming rewards are split into two transactions to avoid the risk of LP tokens getting permanently locked in the contract if there are no rewards token in the contract.
