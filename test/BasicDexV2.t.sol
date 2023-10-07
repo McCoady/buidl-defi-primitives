@@ -22,11 +22,15 @@ contract BasicDexV2Test is Test {
         dex = new BasicDexV2(ERC20(credit), ERC20(asset));
     }
 
-    function testInit() public {
+    function basicInitDex() public {
         credit.approve(address(dex), 100 ether);
         asset.approve(address(dex), 100 ether);
 
         dex.init(100 ether);
+    }
+
+    function testInit() public {
+        basicInitDex();
         assertEq(dex.balanceOf(address(this)), 100 ether);
         assertEq(credit.balanceOf(address(dex)), 100 ether);
         assertEq(asset.balanceOf(address(dex)), 100 ether);
@@ -36,23 +40,17 @@ contract BasicDexV2Test is Test {
         console2.log("LP token name", dex.name());
         console2.log("LP token symbol", dex.symbol());
         assertEq(dex.name(), "CREDASSLP");
-        assertEq(dex.symbol(), "CREDASSLP"); 
+        assertEq(dex.symbol(), "CREDASSLP");
     }
 
     function testCannotInitTwice() public {
-        credit.approve(address(dex), 200 ether);
-        asset.approve(address(dex), 200 ether);
-
-        dex.init(100 ether);
+        basicInitDex();
         vm.expectRevert(BasicDexV2.InitError.selector);
         dex.init(100 ether);
     }
 
     function testWithdrawLiq() public {
-        credit.approve(address(dex), 100 ether);
-        asset.approve(address(dex), 100 ether);
-        dex.init(100 ether);
-
+        basicInitDex();
         dex.withdraw(50 ether);
         assertEq(dex.balanceOf(address(this)), 50 ether);
         assertEq(credit.balanceOf(address(dex)), 50 ether);
@@ -60,9 +58,7 @@ contract BasicDexV2Test is Test {
     }
 
     function testDepositLiqAfterInit() public {
-        credit.approve(address(dex), 100 ether);
-        asset.approve(address(dex), 100 ether);
-        dex.init(100 ether);
+        basicInitDex();
 
         credit.transfer(alice, 50 ether);
         asset.transfer(alice, 50 ether);
@@ -77,9 +73,7 @@ contract BasicDexV2Test is Test {
     }
 
     function testWithdrawLiqAfterMultipleDeposits() public {
-        credit.approve(address(dex), 100 ether);
-        asset.approve(address(dex), 100 ether);
-        dex.init(100 ether);
+        basicInitDex();
 
         credit.transfer(alice, 50 ether);
         asset.transfer(alice, 50 ether);
@@ -96,9 +90,7 @@ contract BasicDexV2Test is Test {
     }
 
     function testInitializerWithdrawAfterDeposits() public {
-        credit.approve(address(dex), 100 ether);
-        asset.approve(address(dex), 100 ether);
-        dex.init(100 ether);
+        basicInitDex();
 
         credit.transfer(alice, 50 ether);
         asset.transfer(alice, 50 ether);
@@ -122,9 +114,7 @@ contract BasicDexV2Test is Test {
         credit.transfer(bob, 10 ether);
 
         vm.startPrank(alice, alice);
-        credit.approve(address(dex), 100 ether);
-        asset.approve(address(dex), 100 ether);
-        dex.init(100 ether);
+        basicInitDex();
         vm.stopPrank();
 
         vm.startPrank(bob, bob);
@@ -135,7 +125,7 @@ contract BasicDexV2Test is Test {
         // check alice withdrew more than 20 ether combined (she got fees)
         console2.log("New dex cred balance", credit.balanceOf(address(dex)));
         console2.log("New dex asset balance", asset.balanceOf(address(dex)));
-        
+
         vm.startPrank(alice, alice);
         dex.withdraw(10 ether);
         uint256 aliceCredits = credit.balanceOf(alice);
@@ -148,9 +138,7 @@ contract BasicDexV2Test is Test {
         asset.transfer(alice, 100 ether);
         credit.transfer(bob, 10 ether);
 
-        credit.approve(address(dex), 100 ether);
-        asset.approve(address(dex), 100 ether);
-        dex.init(100 ether);
+        basicInitDex();
 
         vm.startPrank(alice, alice);
         credit.approve(address(dex), 100 ether);
@@ -172,6 +160,24 @@ contract BasicDexV2Test is Test {
         assertEq(asset.balanceOf(address(dex)), 0);
         assertEq(dex.totalSupply(), 0);
         assertEq(dex.balanceOf(alice), 0);
-        assertEq(dex.balanceOf(address(this)), 0);    
+        assertEq(dex.balanceOf(address(this)), 0);
+    }
+
+    function testAssetInPriceZeroReturnsZero() public {
+        basicInitDex();
+        assertEq(dex.assetInPrice(0), 0);
+    }
+
+    function testCreditInPriceZeroReturnsZero() public {
+        basicInitDex();
+        assertEq(dex.creditInPrice(0), 0);
+    }
+
+    function testPriceXInputZeroReturnsZero() public {
+        basicInitDex();
+        uint256 xRes = credit.balanceOf(address(dex));
+        uint256 yRes = asset.balanceOf(address(dex));
+        assertEq(dex.price(0, xRes, yRes), 0);
+        assertEq(dex.price(0, yRes, xRes), 0);
     }
 }
