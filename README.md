@@ -13,6 +13,14 @@ Both are basic ERC20 token implementations that allow the owner to airdrop new t
 Credit tokens are used as a defacto unit of account in the buidl game.
 Asset tokens are the tokens that users trade credits for.
 
+### BasicBorrower
+
+BasicBorrower is a stripped back implementation of a borrowing and lending contract.
+Users can deposit liquidity which other users can then borrow from.
+Users borrows must be overcollateralised (they must supply more liquidity than they borrow).
+If users debt gets close to being unpayable by their remaining liquidity their borrow can be liquidated.
+BasicBorrower's liquidity is managed using the ERC4626 vault standard.
+
 ### BasicDex
 
 BasicDex is an MVP exchange contract that allows ERC20-ERC20 trading pairs.
@@ -21,7 +29,18 @@ The contract also has slippage protection which, where minimum return amounts ca
 
 ### BasicDexV2
 
-BasicDexV2 builds upon BasicDex but issues an ERC20 token to liquidity providers to track their share of the token pairs liquidity pool. 
+BasicDexV2 builds upon BasicDex but issues an ERC20 token to liquidity providers to track their share of the token pairs liquidity pool.
+
+### BasicLPLock
+
+Allows a user to lock ERC20 tokens for an arbitrary amount of time (7 days).
+No fees or rewards are issues.
+
+### BasicRouter
+
+BasicRouter aims to improve user experience by batching transactions between two dexes that share a common token.
+For example if there two pools - APPLE/CREDIT & BANANA/CREDIT, but no APPLE-BANANA. The router lets users trade directly APPLE -> BANANA (or vice versa).
+This allows users to have a cleaner experience without having to spread liquidity further by adding more pools.
 
 ### DisperseFunds
 
@@ -39,7 +58,6 @@ Claiming involves burning the users FruitBasket tokens, selling their share of t
 
 As FruitBasket but now uses the ERC4626 vault standard for managing the contracts Credit tokens & the Shares ERC20 Token.
 
-
 ### FruitPrediction
 
 FruitPrediction is a basic implementation of an onchain prediction market.
@@ -47,21 +65,13 @@ The user can bet whether a chosen token will be priced higher or lower 10 minute
 The contract uses the tokens associated dex price to calculate it's changes in price.
 If the users prediction is correct they have a further 10 minutes to claim their wager to return 2x their stake (minus a 5% fee)
 
-### BasicBorrower
-
-BasicBorrower is a stripped back implementation of a borrowing and lending contract.
-Users can deposit liquidity which other users can then borrow from.
-Users borrows must be overcollateralised (they must supply more liquidity than they borrow).
-If users debt gets close to being unpayable by their remaining liquidity their borrow can be liquidated.
-BasicBorrower's liquidity is managed using the ERC4626 vault standard.
-
-### BasicLPLock
-
-Allows a user to lock ERC20 tokens for an arbitrary amount of time (7 days).
-No fees or rewards are issues.
-
 ### LPStakerLock
 
 Allows a user to lock a specific LP token for an arbitrary amount of time (7 days).
 Users are issued 5% of their locked amount in a reward token upon completion of their lock time.
 Redeeming LP and redeeming rewards are split into two transactions to avoid the risk of LP tokens getting permanently locked in the contract if there are no rewards token in the contract.
+
+### SimpleStaker
+
+Based on the Synthetix Staking contract. 
+Allows the contract creator to offer a reward token to users for staking a specified token. 
